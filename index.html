@@ -690,13 +690,15 @@ header {
    STATE
 ══════════════════════════════════════════════════════════════ */
 const S = {
-  city:      null,
-  stocks:    JSON.parse(localStorage.getItem('mh4Stocks')  || '["AAPL","TSLA","NVDA","MSFT","BNP.PA"]'),
-  cryptos:   JSON.parse(localStorage.getItem('mh4Cryptos') || '["bitcoin","ethereum","solana","xrp","binancecoin"]'),
-  alerts:    JSON.parse(localStorage.getItem('mh4Alerts')  || '[]'),
-  polyPins:  JSON.parse(localStorage.getItem('mh4Poly')    || '[]'), // [{conditionId, title, ...}]
-  newsFilter:'all',
-  lastVig:   0,
+  city:       null,
+  stocks:     JSON.parse(localStorage.getItem('mh4Stocks')  || '["AAPL","TSLA","NVDA","MSFT","BNP.PA"]'),
+  cryptos:    JSON.parse(localStorage.getItem('mh4Cryptos') || '["bitcoin","ethereum","solana","xrp","binancecoin"]'),
+  alerts:     JSON.parse(localStorage.getItem('mh4Alerts')  || '[]'),
+  polyPins:   JSON.parse(localStorage.getItem('mh4Poly')    || '[]'),
+  indices:    JSON.parse(localStorage.getItem('mh4Idx')     || '[\"^GSPC\",\"^IXIC\",\"^DJI\",\"^FCHI\",\"^GDAXI\",\"^FTSE\",\"^N225\"]'),
+  raw:        JSON.parse(localStorage.getItem('mh4Raw')     || '[\"GC=F\",\"CL=F\",\"BZ=F\",\"NG=F\",\"EURUSD=X\",\"GBPUSD=X\",\"USDCHF=X\"]'),
+  newsFilter: 'all',
+  lastVig:    0,
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -992,32 +994,6 @@ async function refreshPolyPins() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════════════ */
-updateMoon();
-renderNews();
-renderAlerts();
-renderStockList();
-renderCryptos();
-renderStocks();
-renderIdxList();
-renderIdx();
-renderRawList();
-renderRaw();
-renderPolyPins();
-fetchVigilance();
-refreshPolyPins();
-
-setInterval(() => {
-  renderStocks();
-  renderCryptos();
-  renderIdx();
-  renderRaw();
-  if (S.city) fetchWeather(CITIES.find(c => c.name === S.city));
-  refreshPolyPins();
-}, 600_000);
-
-/* ══════════════════════════════════════════════════════════════
    CATALOGUE — Indices, Matières, Forex
    Symboles Yahoo Finance
 ══════════════════════════════════════════════════════════════ */
@@ -1107,9 +1083,6 @@ document.addEventListener('click', e => {
    INDICES MONDIAUX
 ══════════════════════════════════════════════════════════════ */
 const idxCache = {};
-const DEFAULT_IDX = ['^GSPC','^IXIC','^DJI','^FCHI','^GDAXI','^FTSE','^N225'];
-
-S.indices = JSON.parse(localStorage.getItem('mh4Idx') || JSON.stringify(DEFAULT_IDX));
 
 function showIdxSugg(v) {
   buildSugg(v, 'idxSugg', sym => {
@@ -1178,9 +1151,6 @@ async function renderIdx() {
    MATIÈRES PREMIÈRES & FOREX
 ══════════════════════════════════════════════════════════════ */
 const rawCache = {};
-const DEFAULT_RAW = ['GC=F','CL=F','BZ=F','NG=F','EURUSD=X','GBPUSD=X','USDCHF=X'];
-
-S.raw = JSON.parse(localStorage.getItem('mh4Raw') || JSON.stringify(DEFAULT_RAW));
 
 function showRawSugg(v) {
   buildSugg(v, 'rawSugg', sym => {
@@ -1245,6 +1215,33 @@ async function renderRaw() {
     'MAJ ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 }
 
+
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+updateMoon();
+renderNews();
+renderAlerts();
+renderStockList();
+renderCryptos();
+renderStocks();
+renderIdxList();
+renderIdx();
+renderRawList();
+renderRaw();
+renderPolyPins();
+fetchVigilance();
+refreshPolyPins();
+
+setInterval(() => {
+  renderStocks();
+  renderCryptos();
+  renderIdx();
+  renderRaw();
+  if (S.city) fetchWeather(CITIES.find(c => c.name === S.city));
+  refreshPolyPins();
+}, 600_000);
 
 /* ══════════════════════════════════════════════════════════════
    RESIZE SYSTEM
@@ -1373,5 +1370,6 @@ document.addEventListener('dblclick', e => {
 
 initResize();
 
+</script>
 </body>
 </html>
