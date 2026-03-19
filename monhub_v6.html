@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>MonHub — Dashboard Personnel</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg:      #0f1923;
+  --bg2:     #162030;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.04);
+  --text:    #cbd5e1;
+  --dim:     #475569;
+  --hi:      #f1f5f9;
+  --sky:     #0ea5e9;
+  --teal:    #14b8a6;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --amber:   #eab308;
+  --indigo:  #6366f1;
+  --poly:    #00d4aa;
+  --font:    'Figtree', sans-serif;
+}
+html,body { height:100%; }
+body {
+  font-family:var(--font);
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 8% 4%,  rgba(14,165,233,0.12) 0%,transparent 55%),
+    radial-gradient(ellipse 55% 40% at 92% 96%, rgba(20,184,166,0.09) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 30% at 55% 45%, rgba(99,102,241,0.05) 0%,transparent 55%);
+  color:var(--text);
+  font-size:13px;
+  padding:16px 22px 20px;
+  min-height:100vh;
+}
+
+/* ── ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+@keyframes pdot     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+@keyframes shimmer  { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes vigpulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+@keyframes spin     { to{transform:rotate(360deg)} }
+.card { animation:fadeUp .35s ease both; }
+.card:nth-child(1){animation-delay:.04s}.card:nth-child(2){animation-delay:.08s}
+.card:nth-child(3){animation-delay:.12s}.card:nth-child(4){animation-delay:.16s}
+.card:nth-child(5){animation-delay:.20s}.card:nth-child(6){animation-delay:.24s}
+.card:nth-child(7){animation-delay:.28s}.card:nth-child(8){animation-delay:.32s}
+.card:nth-child(9){animation-delay:.36s}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border);
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-mark {
+  width:30px; height:30px; border-radius:8px;
+  background:linear-gradient(135deg,var(--sky),var(--teal));
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:800; color:#fff;
+}
+.logo-text { font-size:17px; font-weight:800; color:var(--hi); letter-spacing:-.4px; }
+.logo-text em { font-style:normal; color:var(--sky); }
+.header-datetime { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.hclock { font-size:36px; font-weight:800; color:var(--hi); letter-spacing:-2px; line-height:1; }
+.hdate  { font-size:15px; color:#64748b; font-weight:500; }
+.hdate strong { color:#94a3b8; font-weight:700; }
+.header-right { display:flex; align-items:center; gap:14px; }
+.live-badge { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--teal); font-weight:600; }
+.live-dot { width:6px;height:6px;background:var(--teal);border-radius:50%;box-shadow:0 0 6px var(--teal);animation:pdot 2s ease-in-out infinite; }
+.refresh-info { font-size:11px; color:var(--dim); }
+
+/* ── GRILLE PRINCIPALE ──────────────────────────────────────── */
+.grid {
+  display:grid;
+  grid-template-columns: 230px 1fr 1fr 210px;
+  grid-template-rows: auto auto;
+  gap:11px;
+  margin-bottom:11px;
+}
+
+/* ── CARD BASE ──────────────────────────────────────────────── */
+.card {
+  background:rgba(255,255,255,0.038);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 16px;
+  position:relative;
+  /* overflow visible so resize handle shows */
+  overflow:visible;
+  transition:border-color .2s;
+  /* Native CSS resize — both directions */
+  resize:both;
+  min-width:160px;
+  min-height:120px;
+  /* clip inner content but let handle overflow */
+}
+/* Inner clip so content doesn't spill */
+.card > *:not(.resize-handle) { overflow:hidden; }
+
+.card:hover { border-color:rgba(255,255,255,0.14); }
+
+/* ── RESIZE HANDLE ──────────────────────────────────────────── */
+.resize-handle {
+  position:absolute;
+  bottom:0; right:0;
+  width:18px; height:18px;
+  cursor:se-resize;
+  z-index:10;
+  opacity:0;
+  transition:opacity .2s;
+  /* draw a corner indicator */
+  background:
+    linear-gradient(135deg,
+      transparent 40%,
+      rgba(14,165,233,0.6) 40%,
+      rgba(14,165,233,0.6) 55%,
+      transparent 55%
+    ),
+    linear-gradient(135deg,
+      transparent 60%,
+      rgba(14,165,233,0.4) 60%,
+      rgba(14,165,233,0.4) 75%,
+      transparent 75%
+    );
+  border-bottom-right-radius:14px;
+}
+.card:hover .resize-handle { opacity:1; }
+.card.resizing .resize-handle { opacity:1; }
+.card.resizing { border-color:rgba(14,165,233,0.4) !important; user-select:none; }
+
+/* Cursor hint on hover near bottom-right */
+.card { cursor:default; }
+
+.card-label {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:#2d3d52; margin-bottom:10px; font-weight:700;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MÉTÉO
+══════════════════════════════════════════════════════════════ */
+.card-weather {
+  grid-column:1; grid-row:1/span 2;
+  background:linear-gradient(160deg,#0c3f5c 0%,#0f2535 60%,#0f1923 100%);
+  border-color:rgba(14,165,233,0.22);
+  box-shadow:0 0 40px rgba(14,165,233,0.06);
+  display:flex; flex-direction:column; gap:9px;
+}
+.card-weather .card-label { color:rgba(148,203,230,.35); margin-bottom:0; }
+
+.vig-wrap { display:flex; flex-direction:column; gap:4px; }
+.vig-header {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:9px; color:#2d3d52; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;
+}
+.vig-upd { font-size:9px; color:#2d3d52; }
+.vig-bar {
+  border-radius:8px; padding:7px 10px;
+  display:flex; align-items:flex-start; gap:8px; font-size:11px; font-weight:600;
+}
+.vig-green  { background:rgba(34,197,94,.1);   border:1px solid rgba(34,197,94,.25);  color:#4ade80; }
+.vig-yellow { background:rgba(234,179,8,.1);   border:1px solid rgba(234,179,8,.28);  color:#fbbf24; }
+.vig-orange { background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.32); color:#fb923c; }
+.vig-red    { background:rgba(239,68,68,.13);  border:1px solid rgba(239,68,68,.32);  color:#f87171; animation:vigpulse 2s infinite; }
+.vig-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:1px; }
+.vig-green  .vig-dot{background:#22c55e;box-shadow:0 0 5px #22c55e;}
+.vig-yellow .vig-dot{background:#eab308;box-shadow:0 0 5px #eab308;}
+.vig-orange .vig-dot{background:#f97316;box-shadow:0 0 6px #f97316;}
+.vig-red    .vig-dot{background:#ef4444;box-shadow:0 0 8px #ef4444;}
+.vig-body {}
+.vig-level { font-size:11px; font-weight:700; }
+.vig-pheno { font-size:10px; opacity:.8; margin-top:1px; }
+.vig-multi { display:flex; flex-direction:column; gap:3px; }
+
+.w-main { display:flex; align-items:center; gap:12px; }
+.w-icon { font-size:44px; line-height:1; }
+.w-temp { font-size:54px; font-weight:800; color:var(--hi); line-height:1; letter-spacing:-2px; }
+.w-unit { font-size:22px; color:var(--sky); font-weight:300; }
+.w-city { font-size:12px; color:#94a3b8; font-weight:600; margin-top:2px; }
+.w-desc { font-size:10px; color:var(--dim); }
+.w-stats {
+  display:grid; grid-template-columns:1fr 1fr; gap:4px 8px;
+  background:rgba(0,0,0,0.15); border-radius:9px; padding:8px 10px;
+}
+.ws { font-size:10px; color:var(--dim); display:flex; justify-content:space-between; }
+.ws span { color:#94a3b8; }
+
+.astro-row { display:flex; gap:5px; }
+.astro-box {
+  flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.06);
+  border-radius:9px; padding:7px 8px; display:flex; align-items:center; gap:7px;
+}
+.astro-icon  { font-size:18px; line-height:1; flex-shrink:0; }
+.astro-label { font-size:9px; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+.astro-val   { font-size:13px; color:var(--hi); font-weight:700; }
+.moon-box {
+  flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.06);
+  border-radius:9px; padding:7px 8px; display:flex; align-items:center; gap:7px;
+}
+.moon-icon  { font-size:22px; line-height:1; }
+.moon-label { font-size:9px; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+.moon-name  { font-size:11px; color:#c4b5fd; font-weight:600; }
+
+.forecast { display:flex; gap:4px; }
+.fc { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:5px 2px; text-align:center; }
+.fc-d { font-size:8px; color:#2d3d52; letter-spacing:1px; margin-bottom:3px; }
+.fc-i { font-size:15px; margin-bottom:2px; }
+.fc-t { font-size:11px; color:var(--hi); font-weight:700; }
+.fc-p { font-size:8px; color:var(--sky); margin-top:1px; }
+
+.city-selector { position:relative; }
+.city-btn {
+  background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.22);
+  color:var(--sky); font-size:10px; font-weight:600; padding:3px 9px;
+  border-radius:20px; cursor:pointer; font-family:var(--font);
+  display:flex; align-items:center; gap:4px;
+}
+.city-dropdown {
+  position:absolute; top:calc(100% + 5px); right:0;
+  background:#1a2d42; border:1px solid rgba(14,165,233,0.3);
+  border-radius:10px; padding:5px; z-index:200;
+  min-width:160px; max-height:200px; overflow-y:auto;
+  display:none; flex-direction:column; gap:1px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.city-dropdown.open { display:flex; }
+.city-opt { padding:6px 10px; font-size:11px; border-radius:6px; cursor:pointer; color:var(--text); }
+.city-opt:hover { background:rgba(14,165,233,0.15); color:var(--hi); }
+
+/* ══════════════════════════════════════════════════════════════
+   BOURSE
+══════════════════════════════════════════════════════════════ */
+.card-stocks { grid-column:2; grid-row:1/span 2; }
+.add-sym-row { display:flex; gap:6px; margin-bottom:12px; }
+.sym-input {
+  flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border);
+  color:var(--hi); font-size:12px; padding:7px 11px; border-radius:9px;
+  font-family:var(--font); outline:none; text-transform:uppercase; transition:.2s;
+}
+.sym-input::placeholder { color:var(--dim); text-transform:none; }
+.sym-input:focus { border-color:rgba(14,165,233,0.4); background:rgba(14,165,233,0.05); }
+.sym-add-btn {
+  background:rgba(14,165,233,0.18); border:1px solid rgba(14,165,233,0.3);
+  color:var(--sky); font-size:20px; width:34px; border-radius:9px;
+  cursor:pointer; font-family:var(--font);
+}
+.sym-add-btn:hover { background:rgba(14,165,233,0.32); }
+.srow {
+  display:flex; align-items:center;
+  padding:11px 10px; border-radius:9px;
+  background:rgba(255,255,255,0.022); border:1px solid var(--border2);
+  gap:8px; margin-bottom:5px; transition:.15s;
+}
+.srow:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.09); }
+.s-sym   { font-size:14px; font-weight:800; color:var(--hi); width:54px; flex-shrink:0; }
+.s-name  { font-size:11px; color:var(--dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.s-price { font-size:15px; color:var(--hi); font-weight:600; width:82px; text-align:right; flex-shrink:0; }
+.s-chg   { font-size:12px; font-weight:700; width:58px; text-align:right; flex-shrink:0; padding:3px 7px; border-radius:6px; }
+.s-chg.up{ background:rgba(34,197,94,.12);  color:var(--green); }
+.s-chg.dn{ background:rgba(239,68,68,.12);  color:var(--red); }
+.s-del   { background:none; border:none; color:rgba(255,255,255,0.08); font-size:16px; cursor:pointer; opacity:0; transition:.15s; flex-shrink:0; }
+.srow:hover .s-del { opacity:1; color:var(--red); }
+.s-update { font-size:10px; color:var(--dim); text-align:right; margin-top:4px; }
+.skel { display:inline-block; width:60px; height:13px; border-radius:4px; background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; vertical-align:middle; }
+
+/* ══════════════════════════════════════════════════════════════
+   CRYPTO
+══════════════════════════════════════════════════════════════ */
+.card-crypto { grid-column:3; grid-row:1/span 2; }
+.crow {
+  display:flex; align-items:center;
+  padding:11px 10px; border-radius:9px;
+  background:rgba(255,255,255,0.022); border:1px solid var(--border2);
+  gap:10px; margin-bottom:5px; transition:.15s;
+}
+.crow:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.09); }
+.c-icon  { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.c-info  { flex:1; min-width:0; }
+.c-sym   { font-size:14px; font-weight:800; color:var(--hi); }
+.c-name  { font-size:10px; color:var(--dim); }
+.c-right { text-align:right; flex-shrink:0; }
+.c-price { font-size:15px; color:var(--hi); font-weight:600; }
+.c-chg   { font-size:11px; font-weight:700; display:inline-block; margin-top:2px; padding:2px 6px; border-radius:5px; }
+.c-chg.up{ background:rgba(34,197,94,.12);  color:var(--green); }
+.c-chg.dn{ background:rgba(239,68,68,.12);  color:var(--red); }
+.c-del   { background:none; border:none; color:rgba(255,255,255,0.08); font-size:16px; cursor:pointer; opacity:0; transition:.15s; flex-shrink:0; }
+.crow:hover .c-del { opacity:1; color:var(--red); }
+
+/* ══════════════════════════════════════════════════════════════
+   COLONNE 4 : Indices + Alertes
+══════════════════════════════════════════════════════════════ */
+.card-indices { grid-column:4; grid-row:1; }
+.irow { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border2); }
+.irow:last-child { border-bottom:none; }
+.i-name { font-size:11px; color:var(--dim); }
+.i-val  { font-size:12px; color:var(--hi); font-weight:600; }
+.i-chg  { font-size:11px; font-weight:700; }
+.up { color:var(--green); }
+.dn { color:var(--red); }
+
+.card-alerts { grid-column:4; grid-row:2; background:rgba(234,179,8,.04); border-color:rgba(234,179,8,.14); }
+.al-add { display:flex; gap:5px; margin-bottom:10px; }
+.al-input {
+  flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border);
+  color:var(--hi); font-size:11px; padding:6px 9px; border-radius:8px; font-family:var(--font); outline:none;
+}
+.al-input:focus { border-color:rgba(234,179,8,.4); }
+.al-add-btn {
+  background:rgba(234,179,8,.18); border:1px solid rgba(234,179,8,.3);
+  color:var(--amber); font-size:18px; width:30px; border-radius:8px; cursor:pointer; font-family:var(--font);
+}
+.al { display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px solid var(--border2); }
+.al:last-child { border-bottom:none; }
+.al-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.al-text { flex:1; font-size:11px; color:#64748b; line-height:1.4; }
+.al-text strong { color:#94a3b8; }
+.al-del  { background:none; border:none; color:rgba(255,255,255,.08); font-size:13px; cursor:pointer; opacity:0; transition:.15s; }
+.al:hover .al-del { opacity:1; color:var(--red); }
+
+/* ══════════════════════════════════════════════════════════════
+   LIGNE BAS : Actualités + Matières
+══════════════════════════════════════════════════════════════ */
+.bottom-grid {
+  display:grid;
+  grid-template-columns: 1fr 210px;
+  gap:11px;
+  margin-bottom:11px;
+}
+.card-news   { }
+.card-rawmat { }
+
+.news-topics { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.topic-pill {
+  font-size:10px; padding:3px 9px; border-radius:20px; cursor:pointer;
+  border:1px solid var(--border); color:var(--dim); font-weight:600; transition:.2s;
+}
+.topic-pill.active { background:rgba(14,165,233,.14); border-color:rgba(14,165,233,.38); color:var(--sky); }
+.topic-pill:hover  { color:var(--text); border-color:rgba(255,255,255,.13); }
+.news-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.ni { background:rgba(255,255,255,.022); border:1px solid var(--border2); border-radius:9px; padding:10px 12px; transition:.15s; }
+.ni:hover { border-color:rgba(255,255,255,.09); }
+.ni-top   { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+.ni-tag   { font-size:9px; letter-spacing:1px; padding:2px 7px; border-radius:4px; font-weight:700; text-transform:uppercase; }
+.t-eco    { background:rgba(20,184,166,.14); color:var(--teal); }
+.t-tech   { background:rgba(14,165,233,.14); color:var(--sky); }
+.t-world  { background:rgba(234,179,8,.14);  color:var(--amber); }
+.t-sport  { background:rgba(239,68,68,.14);  color:var(--red); }
+.t-pol    { background:rgba(99,102,241,.14); color:var(--indigo); }
+.ni-time  { font-size:10px; color:var(--dim); margin-left:auto; }
+.ni-title { font-size:12px; color:#94a3b8; line-height:1.45; }
+
+/* ══════════════════════════════════════════════════════════════
+   POLYMARKET — widget pleine largeur
+══════════════════════════════════════════════════════════════ */
+.card-poly {
+  background: rgba(0,212,170,0.03);
+  border: 1px solid rgba(0,212,170,0.18);
+  border-radius:14px;
+  padding:16px 20px;
+  position:relative; overflow:hidden;
+  animation:fadeUp .35s ease both; animation-delay:.44s;
+}
+.card-poly::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,170,0.4),transparent);
+}
+.poly-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
+}
+.poly-title-row { display:flex; align-items:center; gap:10px; }
+.poly-logo {
+  background:rgba(0,212,170,0.15); border:1px solid rgba(0,212,170,0.3);
+  border-radius:8px; padding:5px 9px;
+  font-size:11px; font-weight:800; color:var(--poly); letter-spacing:1px;
+}
+.poly-title { font-size:13px; font-weight:700; color:var(--hi); }
+.poly-subtitle { font-size:11px; color:var(--dim); }
+
+/* Barre de recherche */
+.poly-search-row { display:flex; gap:8px; align-items:center; }
+.poly-search {
+  flex:1; max-width:380px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(0,212,170,0.25);
+  color:var(--hi); font-size:12px; padding:8px 14px; border-radius:10px;
+  font-family:var(--font); outline:none; transition:.2s;
+}
+.poly-search::placeholder { color:var(--dim); }
+.poly-search:focus { border-color:rgba(0,212,170,0.5); background:rgba(0,212,170,0.05); }
+.poly-search-btn {
+  background:rgba(0,212,170,0.2); border:1px solid rgba(0,212,170,0.35);
+  color:var(--poly); font-size:12px; font-weight:700; padding:8px 16px;
+  border-radius:10px; cursor:pointer; font-family:var(--font); transition:.2s; white-space:nowrap;
+}
+.poly-search-btn:hover { background:rgba(0,212,170,0.35); }
+.poly-search-btn:disabled { opacity:.4; cursor:not-allowed; }
+.poly-upd { font-size:10px; color:var(--dim); }
+
+/* Résultats de recherche */
+.poly-results {
+  display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:300;
+  background:#131f2e; border:1px solid rgba(0,212,170,0.3);
+  border-radius:10px; padding:6px; min-width:380px; max-height:240px; overflow-y:auto;
+  box-shadow:0 8px 28px rgba(0,0,0,0.5);
+}
+.poly-results.open { display:block; }
+.poly-result-item {
+  padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12px; color:var(--text);
+  display:flex; align-items:center; gap:10px; transition:.15s; border-bottom:1px solid var(--border2);
+}
+.poly-result-item:last-child { border-bottom:none; }
+.poly-result-item:hover { background:rgba(0,212,170,0.1); color:var(--hi); }
+.poly-result-title { flex:1; line-height:1.3; }
+.poly-result-vol { font-size:10px; color:var(--dim); white-space:nowrap; }
+.poly-result-prob { font-size:13px; font-weight:800; color:var(--poly); white-space:nowrap; }
+
+/* Marchés épinglés */
+.poly-pinned { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.poly-empty {
+  color:var(--dim); font-size:12px; padding:16px 0; text-align:center; width:100%;
+  border:1px dashed rgba(0,212,170,0.15); border-radius:10px;
+}
+
+/* Carte marché individuelle */
+.poly-market {
+  background:rgba(255,255,255,0.028); border:1px solid rgba(0,212,170,0.14);
+  border-radius:12px; padding:14px 16px;
+  width: calc(25% - 8px); min-width:220px;
+  position:relative; transition:.2s;
+  display:flex; flex-direction:column; gap:10px;
+}
+.poly-market:hover { border-color:rgba(0,212,170,0.3); background:rgba(0,212,170,0.04); }
+.poly-market-unpin {
+  position:absolute; top:8px; right:10px;
+  background:none; border:none; color:rgba(255,255,255,.1);
+  font-size:14px; cursor:pointer; transition:.15s;
+}
+.poly-market:hover .poly-market-unpin { color:var(--red); opacity:1; }
+.poly-market-title {
+  font-size:12px; color:var(--hi); font-weight:600;
+  line-height:1.4; padding-right:16px;
+}
+.poly-market-meta { display:flex; align-items:center; gap:6px; }
+.poly-market-cat {
+  font-size:9px; letter-spacing:1px; text-transform:uppercase; font-weight:700;
+  padding:2px 7px; border-radius:4px;
+  background:rgba(0,212,170,0.12); color:var(--poly);
+}
+.poly-market-vol { font-size:10px; color:var(--dim); }
+.poly-market-end { font-size:10px; color:var(--dim); margin-left:auto; }
+
+/* Barre de probabilité */
+.poly-prob-section { }
+.poly-outcomes { display:flex; flex-direction:column; gap:5px; }
+.poly-outcome { display:flex; align-items:center; gap:8px; }
+.poly-outcome-name { font-size:11px; color:#94a3b8; width:32px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; }
+.poly-bar-wrap { flex:1; background:rgba(255,255,255,0.06); border-radius:4px; height:6px; overflow:hidden; }
+.poly-bar-fill { height:100%; border-radius:4px; transition:width .6s ease; }
+.poly-bar-yes { background:linear-gradient(90deg,#22c55e,#16a34a); }
+.poly-bar-no  { background:linear-gradient(90deg,#ef4444,#dc2626); }
+.poly-bar-oth { background:linear-gradient(90deg,#0ea5e9,#0284c7); }
+.poly-outcome-pct { font-size:13px; font-weight:800; width:38px; text-align:right; flex-shrink:0; }
+.poly-outcome-pct.yes-col { color:var(--green); }
+.poly-outcome-pct.no-col  { color:var(--red); }
+.poly-outcome-pct.oth-col { color:var(--sky); }
+
+/* Loader spinner */
+.poly-spinner {
+  width:16px; height:16px; border:2px solid rgba(0,212,170,0.2);
+  border-top-color:var(--poly); border-radius:50%;
+  animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px;
+}
+
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:3px; }
+
+/* ── SUGGESTION DROPDOWN (indices / forex) ──────────────────── */
+.sugg-dropdown {
+  position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:300;
+  background:#131f2e; border:1px solid rgba(14,165,233,0.3);
+  border-radius:10px; padding:5px; max-height:220px; overflow-y:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  display:none;
+}
+.sugg-dropdown.open { display:block; }
+.sugg-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:7px 10px; border-radius:7px; cursor:pointer; font-size:12px;
+  color:var(--text); border-bottom:1px solid var(--border2); transition:.15s;
+}
+.sugg-item:last-child { border-bottom:none; }
+.sugg-item:hover { background:rgba(14,165,233,0.12); color:var(--hi); }
+.sugg-sym  { font-weight:700; color:var(--hi); width:80px; flex-shrink:0; }
+.sugg-name { flex:1; color:var(--dim); font-size:11px; }
+.sugg-cat  { font-size:9px; padding:2px 6px; border-radius:4px; letter-spacing:1px; font-weight:700; flex-shrink:0; }
+.sugg-cat-idx { background:rgba(14,165,233,.14); color:var(--sky); }
+.sugg-cat-mat { background:rgba(234,179,8,.14); color:var(--amber); }
+.sugg-cat-fx  { background:rgba(20,184,166,.14); color:var(--teal); }
+
+/* irow avec bouton supprimer */
+.irow { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border2); gap:4px; }
+.irow:last-child { border-bottom:none; }
+.i-name { font-size:11px; color:var(--dim); flex:1; }
+.i-val  { font-size:12px; color:var(--hi); font-weight:600; }
+.i-chg  { font-size:11px; font-weight:700; width:46px; text-align:right; flex-shrink:0; }
+.i-del  { background:none; border:none; color:rgba(255,255,255,0.07); font-size:13px; cursor:pointer; opacity:0; transition:.15s; flex-shrink:0; padding:0 2px; }
+.irow:hover .i-del { opacity:1; color:var(--red); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">M</div>
+    <div class="logo-text">mon<em>hub</em></div>
+  </div>
+  <div class="header-datetime">
+    <div class="hclock" id="clock">--:--:--</div>
+    <div class="hdate"  id="hdate">…</div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="refresh-info">MAJ · 10 min</div>
+  </div>
+</header>
+
+<!-- GRILLE PRINCIPALE -->
+<div class="grid">
+
+  <!-- ══ MÉTÉO ══════════════════════════════════════════════════ -->
+  <div class="card card-weather" id="w-weather" data-wid="weather">
+    <div class="card-label">
+      Météo
+      <div class="city-selector">
+        <button class="city-btn" id="cityBtn" onclick="toggleCityDD()">📍 Ville ▾</button>
+        <div class="city-dropdown" id="cityDD"></div>
+      </div>
+    </div>
+    <div class="vig-wrap">
+      <div class="vig-header">
+        <span>Vigilance · Grand-Est</span>
+        <span class="vig-upd" id="vigUpd">MAJ…</span>
+      </div>
+      <div id="vigContainer">
+        <div class="vig-bar vig-green"><div class="vig-dot"></div><div class="vig-body"><div class="vig-level">Chargement…</div></div></div>
+      </div>
+    </div>
+    <div class="w-main">
+      <div class="w-icon" id="wIcon">🌡</div>
+      <div>
+        <div class="w-temp"><span id="wTemp">--</span><span class="w-unit">°</span></div>
+        <div class="w-city" id="wCity">Sélectionnez une ville</div>
+        <div class="w-desc" id="wDesc">--</div>
+      </div>
+    </div>
+    <div class="w-stats">
+      <div class="ws">💧 Humidité  <span id="wHum">--%</span></div>
+      <div class="ws">💨 Vent       <span id="wWind">--</span></div>
+      <div class="ws">🌂 Pluie      <span id="wRain">--%</span></div>
+      <div class="ws">🌡 Ressenti   <span id="wFeels">--°</span></div>
+      <div class="ws">👁 Visibilité <span id="wVis">--</span></div>
+      <div class="ws">📊 Pression   <span id="wPress">--</span></div>
+    </div>
+    <div class="astro-row">
+      <div class="astro-box"><div class="astro-icon">🌅</div><div><div class="astro-label">Lever</div><div class="astro-val" id="sunRise">--:--</div></div></div>
+      <div class="astro-box"><div class="astro-icon">🌇</div><div><div class="astro-label">Coucher</div><div class="astro-val" id="sunSet">--:--</div></div></div>
+      <div class="moon-box"><div class="moon-icon" id="moonIcon">🌑</div><div><div class="moon-label">Lune</div><div class="moon-name" id="moonName">--</div></div></div>
+    </div>
+    <div class="forecast" id="forecastRow">
+      <div class="fc"><div class="fc-d">---</div><div class="fc-i">🌡</div><div class="fc-t">--°</div><div class="fc-p">--%</div></div>
+    </div>
+  </div>
+
+  <!-- ══ BOURSE ══════════════════════════════════════════════════ -->
+  <div class="card card-stocks" id="w-stocks" data-wid="stocks">
+    <div class="card-label">Bourse <span id="stTime"></span></div>
+    <div class="add-sym-row">
+      <input class="sym-input" id="stockInput" placeholder="Symbole : AAPL, BNP.PA, ^FCHI…" maxlength="12" onkeydown="if(event.key==='Enter')addStock()">
+      <button class="sym-add-btn" onclick="addStock()">+</button>
+    </div>
+    <div id="stockList"></div>
+    <div class="s-update" id="stUpdLabel"></div>
+  </div>
+
+  <!-- ══ CRYPTO ══════════════════════════════════════════════════ -->
+  <div class="card card-crypto" id="w-crypto" data-wid="crypto">
+    <div class="card-label">Crypto <span id="crTime"></span></div>
+    <div class="add-sym-row">
+      <input class="sym-input" id="cryptoInput" placeholder="Symbole : BTC, ETH, SOL…" maxlength="10" onkeydown="if(event.key==='Enter')addCrypto()">
+      <button class="sym-add-btn" onclick="addCrypto()">+</button>
+    </div>
+    <div id="cryptoList"></div>
+  </div>
+
+  <!-- ══ INDICES ═════════════════════════════════════════════════ -->
+  <div class="card card-indices" id="w-indices" data-wid="indices">
+    <div class="card-label">Indices mondiaux <span id="idxTime"></span></div>
+    <div class="add-sym-row" style="position:relative;">
+      <input class="sym-input" id="idxInput" placeholder="Ex: ^GSPC, ^FCHI, ^N225…" maxlength="12"
+             onkeydown="if(event.key==='Enter')addIdx()"
+             oninput="showIdxSugg(this.value)" autocomplete="off">
+      <button class="sym-add-btn" onclick="addIdx()">+</button>
+      <div class="sugg-dropdown" id="idxSugg"></div>
+    </div>
+    <div id="idxList"></div>
+  </div>
+
+  <!-- ══ ALERTES PERSO ═══════════════════════════════════════════ -->
+  <div class="card card-alerts" id="w-alerts" data-wid="alerts">
+    <div class="card-label" style="color:#78400e;">Alertes personnalisées</div>
+    <div class="al-add">
+      <input class="al-input" id="alertInput" placeholder="BTC > 90000, TSLA < 250…" onkeydown="if(event.key==='Enter')addAlert()">
+      <button class="al-add-btn" onclick="addAlert()">+</button>
+    </div>
+    <div id="alertList"></div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- LIGNE INFÉRIEURE : Actualités + Matières -->
+<div class="bottom-grid">
+  <div class="card card-news" id="w-news" data-wid="news">
+    <div class="card-label">Actualités</div>
+    <div class="news-topics">
+      <span class="topic-pill active" onclick="filterNews('all',this)">Tout</span>
+      <span class="topic-pill" onclick="filterNews('eco',this)">Économie</span>
+      <span class="topic-pill" onclick="filterNews('tech',this)">Tech</span>
+      <span class="topic-pill" onclick="filterNews('world',this)">Monde</span>
+      <span class="topic-pill" onclick="filterNews('sport',this)">Sport</span>
+      <span class="topic-pill" onclick="filterNews('pol',this)">Politique</span>
+    </div>
+    <div class="news-grid" id="newsList"></div>
+  </div>
+  <div class="card card-rawmat" id="w-rawmat" data-wid="rawmat">
+    <div class="card-label">Matières &amp; Forex <span id="rawTime"></span></div>
+    <div class="add-sym-row" style="position:relative;">
+      <input class="sym-input" id="rawInput" placeholder="Ex: GC=F, CL=F, EURUSD=X…" maxlength="14"
+             onkeydown="if(event.key==='Enter')addRaw()"
+             oninput="showRawSugg(this.value)" autocomplete="off">
+      <button class="sym-add-btn" onclick="addRaw()">+</button>
+      <div class="sugg-dropdown" id="rawSugg"></div>
+    </div>
+    <div id="rawList"></div>
+  </div>
+</div>
+
+<!-- ══ POLYMARKET ════════════════════════════════════════════════ -->
+<div class="card-poly">
+  <div class="poly-header">
+    <div class="poly-title-row">
+      <div class="poly-logo">POLY</div>
+      <div>
+        <div class="poly-title">Polymarket — Marchés de prédiction</div>
+        <div class="poly-subtitle">Recherche et épingle les marchés qui t'intéressent</div>
+      </div>
+    </div>
+    <div class="poly-upd" id="polyUpd"></div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div style="position:relative;">
+    <div class="poly-search-row">
+      <input class="poly-search" id="polySearchInput"
+             placeholder="🔍  Rechercher un marché : élection, Bitcoin, Fed, guerre..."
+             onkeydown="if(event.key==='Enter')searchPoly()"
+             oninput="onPolyInput()">
+      <button class="poly-search-btn" id="polySearchBtn" onclick="searchPoly()">Rechercher</button>
+    </div>
+    <!-- Dropdown résultats -->
+    <div class="poly-results" id="polyResults"></div>
+  </div>
+
+  <!-- Marchés épinglés -->
+  <div class="poly-pinned" id="polyPinned">
+    <div class="poly-empty" id="polyEmpty">
+      Recherche un marché puis clique dessus pour l'épingler ici 📌
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════ */
+const S = {
+  city:      null,
+  stocks:    JSON.parse(localStorage.getItem('mh4Stocks')  || '["AAPL","TSLA","NVDA","MSFT","BNP.PA"]'),
+  cryptos:   JSON.parse(localStorage.getItem('mh4Cryptos') || '["bitcoin","ethereum","solana","xrp","binancecoin"]'),
+  alerts:    JSON.parse(localStorage.getItem('mh4Alerts')  || '[]'),
+  polyPins:  JSON.parse(localStorage.getItem('mh4Poly')    || '[]'), // [{conditionId, title, ...}]
+  newsFilter:'all',
+  lastVig:   0,
+};
+
+/* ══════════════════════════════════════════════════════════════
+   CLOCK
+══════════════════════════════════════════════════════════════ */
+const DAYS   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function tick(){
+  const n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleTimeString('fr-FR');
+  document.getElementById('hdate').innerHTML =
+    `${DAYS[n.getDay()]} <strong>${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}</strong>`;
+}
+setInterval(tick, 1000); tick();
+
+/* ══════════════════════════════════════════════════════════════
+   VIGILANCE MÉTÉOFRANCE
+══════════════════════════════════════════════════════════════ */
+const GE_DEPTS = ['54','55','57','67','68','08','10','51','52','88'];
+const PHENO_LABELS = {1:'Vent violent',2:'Pluie-inondation',3:'Orages',4:'Inondation',5:'Neige-verglas',6:'Canicule',7:'Grand froid',8:'Avalanches',9:'Vagues-submersion'};
+const PHENO_ICONS  = {1:'💨',2:'🌧',3:'⛈',4:'🌊',5:'❄️',6:'🌡',7:'🥶',8:'⛰',9:'🌊'};
+const VIG_META = {1:{cls:'vig-green',label:'Vigilance verte'},2:{cls:'vig-yellow',label:'Vigilance jaune'},3:{cls:'vig-orange',label:'Vigilance orange'},4:{cls:'vig-red',label:'Vigilance rouge'}};
+
+async function fetchVigilance(){
+  const now = Date.now();
+  if(now - S.lastVig < 6*3600*1000 && S.lastVig !== 0) return;
+  S.lastVig = now;
+  const upd = document.getElementById('vigUpd');
+  upd.textContent = 'Chargement…';
+  try{
+    const url = `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/weatherfrance-vigilancemeteo/records?limit=100&where=couleur%3E1&order_by=couleur%20desc`;
+    const data = await(await fetch(url)).json();
+    const recs = (data.results||[]).filter(r=>GE_DEPTS.includes((r.dep||r.departement||r.num_dep||'').toString().padStart(2,'0')));
+    let maxLvl=1; const pm={};
+    for(const r of recs){const l=parseInt(r.couleur||1),p=parseInt(r.phenomene_id||0);if(l>maxLvl)maxLvl=l;if(p>0&&l>1&&(!pm[p]||l>pm[p]))pm[p]=l;}
+    renderVigilance(maxLvl,pm);
+    upd.textContent='MAJ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }catch{renderVigilance(1,{});document.getElementById('vigUpd').textContent='Source indisponible';}
+}
+function renderVigilance(maxLvl,pm){
+  const c=document.getElementById('vigContainer');
+  const meta=VIG_META[maxLvl]||VIG_META[1];
+  const entries=Object.entries(pm);
+  if(!entries.length){
+    c.innerHTML=`<div class="vig-bar ${meta.cls}"><div class="vig-dot"></div><div class="vig-body"><div class="vig-level">${meta.label}</div><div class="vig-pheno">Pas de vigilance particulière</div></div></div>`;
+  }else{
+    c.innerHTML=`<div class="vig-multi">`+entries.map(([p,l])=>{const m=VIG_META[l]||VIG_META[1];return`<div class="vig-bar ${m.cls}" style="padding:5px 8px;"><div class="vig-dot"></div><div class="vig-body"><div class="vig-level">${PHENO_ICONS[p]||'⚠'} ${PHENO_LABELS[p]||'Phénomène'}</div><div class="vig-pheno">${m.label}</div></div></div>`;}).join('')+`</div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MÉTÉO — Open-Meteo
+══════════════════════════════════════════════════════════════ */
+const CITIES=[
+  {name:'Metz',lat:49.1193,lon:6.1757},{name:'Paris',lat:48.8566,lon:2.3522},
+  {name:'Lyon',lat:45.7640,lon:4.8357},{name:'Marseille',lat:43.2965,lon:5.3698},
+  {name:'Bordeaux',lat:44.8378,lon:-0.5792},{name:'Toulouse',lat:43.6047,lon:1.4442},
+  {name:'Nantes',lat:47.2184,lon:-1.5536},{name:'Strasbourg',lat:48.5734,lon:7.7521},
+  {name:'Nancy',lat:48.6921,lon:6.1844},{name:'Reims',lat:49.2583,lon:4.0317},
+  {name:'Nice',lat:43.7102,lon:7.2620},{name:'Lille',lat:50.6292,lon:3.0573},
+  {name:'Rennes',lat:48.1173,lon:-1.6778},{name:'Grenoble',lat:45.1885,lon:5.7245},
+  {name:'Montpellier',lat:43.6119,lon:3.8772},{name:'Londres',lat:51.5074,lon:-0.1278},
+  {name:'Madrid',lat:40.4168,lon:-3.7038},{name:'Berlin',lat:52.5200,lon:13.4050},
+  {name:'Bruxelles',lat:50.8503,lon:4.3517},
+];
+const WX={0:'☀️ Ciel dégagé',1:'🌤 Principalement dégagé',2:'⛅ Partiellement nuageux',3:'☁️ Couvert',45:'🌫 Brouillard',48:'🌫 Brouillard givrant',51:'🌦 Bruine légère',53:'🌦 Bruine',55:'🌧 Bruine dense',61:'🌧 Pluie légère',63:'🌧 Pluie',65:'🌧 Pluie forte',71:'🌨 Neige légère',73:'❄️ Neige',75:'❄️ Neige forte',80:'🌦 Averses légères',81:'🌧 Averses',82:'⛈ Averses violentes',95:'⛈ Orage',96:'⛈ Orage + grêle',99:'⛈ Orage violent'};
+
+function moonPhase(d){const k=new Date(2000,0,6);const diff=(d-k)/86400000;const p=((diff%29.53058867)+29.53058867)%29.53058867/29.53058867;if(p<.033||p>=.967)return{icon:'🌑',name:'Nouvelle Lune'};if(p<.133)return{icon:'🌒',name:'Croissant croissant'};if(p<.233)return{icon:'🌓',name:'Premier Quartier'};if(p<.383)return{icon:'🌔',name:'Gibbeuse croissante'};if(p<.467)return{icon:'🌕',name:'Pleine Lune'};if(p<.567)return{icon:'🌖',name:'Gibbeuse décroissante'};if(p<.717)return{icon:'🌗',name:'Dernier Quartier'};if(p<.867)return{icon:'🌘',name:'Croissant décroissant'};return{icon:'🌑',name:'Nouvelle Lune'};}
+function updateMoon(){const m=moonPhase(new Date());document.getElementById('moonIcon').textContent=m.icon;document.getElementById('moonName').textContent=m.name;}
+
+function buildCityDD(){document.getElementById('cityDD').innerHTML=CITIES.map(c=>`<div class="city-opt" onclick="selectCity('${c.name}')">${c.name}</div>`).join('');}
+buildCityDD();
+function toggleCityDD(){document.getElementById('cityDD').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.city-selector'))document.getElementById('cityDD').classList.remove('open');});
+async function selectCity(name){document.getElementById('cityDD').classList.remove('open');document.getElementById('cityBtn').textContent=`📍 ${name} ▾`;const city=CITIES.find(c=>c.name===name);S.city=name;await fetchWeather(city);}
+async function fetchWeather(city){
+  document.getElementById('wTemp').textContent='…'; document.getElementById('wCity').textContent=city.name;
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relativehumidity_2m,precipitation_probability,visibility,surface_pressure&daily=weathercode,temperature_2m_max,precipitation_probability_max,sunrise,sunset&forecast_days=7&timezone=auto`;
+    const d=await(await fetch(url)).json(); const c=d.current;
+    const wx=WX[c.weathercode]||'🌡 --'; const[ico,...desc]=wx.split(' ');
+    document.getElementById('wIcon').textContent=ico;
+    document.getElementById('wTemp').textContent=Math.round(c.temperature_2m);
+    document.getElementById('wDesc').textContent=desc.join(' ');
+    document.getElementById('wHum').textContent=c.relativehumidity_2m+'%';
+    document.getElementById('wWind').textContent=Math.round(c.windspeed_10m)+' km/h';
+    document.getElementById('wRain').textContent=(c.precipitation_probability??'--')+'%';
+    document.getElementById('wFeels').textContent=Math.round(c.apparent_temperature)+'°';
+    document.getElementById('wVis').textContent=c.visibility?(c.visibility/1000).toFixed(0)+' km':'--';
+    document.getElementById('wPress').textContent=Math.round(c.surface_pressure)+' hPa';
+    if(d.daily.sunrise?.[0]){document.getElementById('sunRise').textContent=d.daily.sunrise[0].slice(11,16);document.getElementById('sunSet').textContent=d.daily.sunset[0].slice(11,16);}
+    const DN=['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+    document.getElementById('forecastRow').innerHTML='';
+    for(let i=1;i<7;i++){const wc=d.daily.weathercode[i];const ico2=(WX[wc]||'🌡').split(' ')[0];document.getElementById('forecastRow').innerHTML+=`<div class="fc"><div class="fc-d">${DN[(new Date().getDay()+i)%7]}</div><div class="fc-i">${ico2}</div><div class="fc-t">${Math.round(d.daily.temperature_2m_max[i])}°</div><div class="fc-p">${d.daily.precipitation_probability_max[i]??0}%</div></div>`;}
+  }catch{document.getElementById('wTemp').textContent='?'; document.getElementById('wDesc').textContent='Erreur réseau';}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOURSE
+══════════════════════════════════════════════════════════════ */
+const STOCK_NAMES={'AAPL':'Apple','TSLA':'Tesla','MSFT':'Microsoft','NVDA':'Nvidia','META':'Meta','GOOGL':'Alphabet','AMZN':'Amazon','BNP.PA':'BNP Paribas','OR.PA':'L\'Oréal','AIR.PA':'Airbus','MC.PA':'LVMH','SAP.DE':'SAP','^FCHI':'CAC 40','^GSPC':'S&P 500','^IXIC':'NASDAQ','^DJI':'Dow Jones'};
+const stCache={};
+async function fetchQ(sym){try{const url=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;const d=JSON.parse((await(await fetch(proxy)).json()).contents);const m=d.chart.result[0].meta;return{price:m.regularMarketPrice,prev:m.chartPreviousClose,name:m.longName||m.shortName||sym};}catch{return null;}}
+function fmtP(p){if(!p)return'--';if(p>10000)return p.toLocaleString('fr-FR',{maximumFractionDigits:0});if(p>100)return p.toFixed(2);return p.toFixed(3);}
+function fmtC(c){return(c>=0?'+':'')+c.toFixed(2)+'%';}
+async function renderStocks(){renderStockList();for(const sym of S.stocks){const q=await fetchQ(sym);if(q){const chg=((q.price-q.prev)/q.prev)*100;stCache[sym]={price:fmtP(q.price),chg:fmtC(chg),dir:chg>=0?'up':'dn',name:q.name};}renderStockList();}document.getElementById('stUpdLabel').textContent='MAJ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+function renderStockList(){const el=document.getElementById('stockList');if(!S.stocks.length){el.innerHTML='<div style="color:var(--dim);font-size:12px;padding:8px 0;">Ajoutez un symbole</div>';return;}el.innerHTML=S.stocks.map(sym=>{const c=stCache[sym];const lbl=sym.replace('^','').replace('.PA','').replace('.MI','').replace('.DE','');return`<div class="srow"><div class="s-sym">${lbl}</div><div class="s-name">${c?c.name:(STOCK_NAMES[sym]||sym)}</div><div class="s-price">${c?c.price:`<span class="skel"></span>`}</div><div class="s-chg ${c?c.dir:''}">${c?c.chg:'…'}</div><button class="s-del" onclick="removeStock('${sym}')">×</button></div>`;}).join('');}
+function addStock(){const v=document.getElementById('stockInput').value.trim().toUpperCase();if(!v||S.stocks.includes(v))return;S.stocks.push(v);saveS();renderStocks();document.getElementById('stockInput').value='';}
+function removeStock(s){S.stocks=S.stocks.filter(x=>x!==s);delete stCache[s];saveS();renderStockList();}
+function saveS(){localStorage.setItem('mh4Stocks',JSON.stringify(S.stocks));}
+
+/* ══════════════════════════════════════════════════════════════
+   CRYPTO — CoinGecko
+══════════════════════════════════════════════════════════════ */
+const CG_IDS={'BTC':'bitcoin','ETH':'ethereum','SOL':'solana','XRP':'ripple','BNB':'binancecoin','ADA':'cardano','DOGE':'dogecoin','DOT':'polkadot','LINK':'chainlink','AVAX':'avalanche-2','MATIC':'matic-network','UNI':'uniswap','LTC':'litecoin','BCH':'bitcoin-cash','ATOM':'cosmos'};
+const ID_SYM=Object.fromEntries(Object.entries(CG_IDS).map(([k,v])=>[v,k]));
+const C_COLORS={bitcoin:'#f7931a',ethereum:'#627eea',solana:'#9945ff',ripple:'#00aae4',binancecoin:'#f3ba2f',cardano:'#0033ad',dogecoin:'#c2a633',polkadot:'#e6007a',chainlink:'#2a5ada','matic-network':'#8247e5','avalanche-2':'#e84142',uniswap:'#ff007a',litecoin:'#bfbbbb','bitcoin-cash':'#8dc351',cosmos:'#2e3148'};
+const C_EMOJI={bitcoin:'₿',ethereum:'Ξ',solana:'◎',ripple:'✕',binancecoin:'⬡',cardano:'₳',dogecoin:'Ð',polkadot:'●',chainlink:'⬡','avalanche-2':'▲',uniswap:'🦄'};
+async function renderCryptos(){const el=document.getElementById('cryptoList');if(!S.cryptos.length){el.innerHTML='<div style="color:var(--dim);font-size:12px;padding:8px 0;">Ajoutez une crypto</div>';return;}try{const ids=S.cryptos.join(',');const d=await(await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`)).json();el.innerHTML=S.cryptos.map(id=>{const sym=ID_SYM[id]||id.slice(0,5).toUpperCase();const info=d[id];const p=info?(info.usd>1000?info.usd.toLocaleString('fr-FR',{maximumFractionDigits:0}):info.usd>1?info.usd.toFixed(2):info.usd.toFixed(5)):'--';const chg=info?info.usd_24h_change:null;const cs=chg!=null?(chg>=0?'+':'')+chg.toFixed(2)+'%':'--';const dir=chg!=null?(chg>=0?'up':'dn'):'';const col=C_COLORS[id]||'#94a3b8';const emo=C_EMOJI[id]||sym[0];return`<div class="crow"><div class="c-icon" style="background:${col}22;">${emo}</div><div class="c-info"><div class="c-sym">${sym}</div><div class="c-name">${id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,' ')}</div></div><div class="c-right"><div class="c-price">$${p}</div><div class="c-chg ${dir}">${cs}</div></div><button class="c-del" onclick="removeCrypto('${id}')">×</button></div>`;}).join('');document.getElementById('crTime').textContent='MAJ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}catch{el.innerHTML='<div style="color:var(--dim);font-size:12px;padding:8px 0;">Erreur API (limite, réessayez)</div>';}}
+function addCrypto(){const v=document.getElementById('cryptoInput').value.trim().toLowerCase();if(!v)return;const id=CG_IDS[v.toUpperCase()]||v;if(!S.cryptos.includes(id)){S.cryptos.push(id);saveC();renderCryptos();}document.getElementById('cryptoInput').value='';}
+function removeCrypto(id){S.cryptos=S.cryptos.filter(x=>x!==id);saveC();renderCryptos();}
+function saveC(){localStorage.setItem('mh4Cryptos',JSON.stringify(S.cryptos));}
+
+/* ══════════════════════════════════════════════════════════════
+   ACTUALITÉS
+══════════════════════════════════════════════════════════════ */
+const NEWS=[{time:'08:19',tag:'eco',label:'ECO',title:'BCE maintient ses taux directeurs malgré la pression inflationniste persistante en zone euro'},{time:'07:31',tag:'tech',label:'TECH',title:'Google dévoile Gemini Ultra 2 — bond majeur pour les agents autonomes'},{time:'06:48',tag:'world',label:'MONDE',title:'G20 à New Delhi : accord sur la taxation des multinationales du numérique'},{time:'06:12',tag:'sport',label:'SPORT',title:'PSG qualifié pour les demi-finales UCL après 3–1 contre l\'Atlético Madrid'},{time:'05:55',tag:'eco',label:'ECO',title:'Brent Crude dépasse les $92 après les tensions en mer Rouge'},{time:'05:20',tag:'tech',label:'TECH',title:'Apple annonce la puce M4 Ultra — 20% plus rapide en traitement IA'},{time:'04:10',tag:'pol',label:'POLITIQUE',title:'Remaniement ministériel : trois nouveaux secrétaires d\'État nommés ce matin'},{time:'03:45',tag:'world',label:'MONDE',title:'Séisme magnitude 5.8 au Japon — aucun risque de tsunami'},{time:'03:00',tag:'eco',label:'ECO',title:'Taux de chômage en France stable à 7.3% au T4 2025 selon l\'INSEE'}];
+function filterNews(t,el){S.newsFilter=t;document.querySelectorAll('.topic-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderNews();}
+function renderNews(){const items=S.newsFilter==='all'?NEWS:NEWS.filter(n=>n.tag===S.newsFilter);document.getElementById('newsList').innerHTML=items.slice(0,6).map(n=>`<div class="ni"><div class="ni-top"><span class="ni-tag t-${n.tag}">${n.label}</span><span class="ni-time">${n.time}</span></div><div class="ni-title">${n.title}</div></div>`).join('');}
+
+/* ══════════════════════════════════════════════════════════════
+   ALERTES
+══════════════════════════════════════════════════════════════ */
+const AL_COLS=['#22c55e','#0ea5e9','#eab308','#ef4444','#8b5cf6','#14b8a6'];
+function addAlert(){const v=document.getElementById('alertInput').value.trim();if(!v)return;S.alerts.push({text:v,color:AL_COLS[S.alerts.length%AL_COLS.length],id:Date.now()});saveA();renderAlerts();document.getElementById('alertInput').value='';}
+function removeAlert(id){S.alerts=S.alerts.filter(a=>a.id!==id);saveA();renderAlerts();}
+function saveA(){localStorage.setItem('mh4Alerts',JSON.stringify(S.alerts));}
+function renderAlerts(){const el=document.getElementById('alertList');if(!S.alerts.length){el.innerHTML='<div style="color:var(--dim);font-size:11px;padding:6px 0;">Aucune alerte configurée</div>';return;}el.innerHTML=S.alerts.map(a=>`<div class="al"><div class="al-dot" style="background:${a.color};box-shadow:0 0 5px ${a.color}88;"></div><div class="al-text">${a.text}</div><button class="al-del" onclick="removeAlert(${a.id})">×</button></div>`).join('');}
+
+/* ══════════════════════════════════════════════════════════════
+   POLYMARKET — API Gamma (sans clé, CORS ok depuis navigateur)
+   https://gamma-api.polymarket.com/markets
+══════════════════════════════════════════════════════════════ */
+
+// Ferme le dropdown si clic ailleurs
+document.addEventListener('click', e => {
+  if (!e.target.closest('.card-poly')) {
+    document.getElementById('polyResults').classList.remove('open');
+  }
+});
+
+function onPolyInput() {
+  const v = document.getElementById('polySearchInput').value.trim();
+  if (!v) document.getElementById('polyResults').classList.remove('open');
+}
+
+async function searchPoly() {
+  const q = document.getElementById('polySearchInput').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('polySearchBtn');
+  const res = document.getElementById('polyResults');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="poly-spinner"></span> Recherche…';
+  res.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--dim);">Recherche en cours…</div>';
+  res.classList.add('open');
+
+  try {
+    // Gamma API — recherche par titre, marchés actifs triés par volume
+    const url = `https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=12&_c=${encodeURIComponent(q)}`;
+    const data = await (await fetch(url)).json();
+
+    // Filtrer côté client sur le titre (l'API ne supporte pas toujours ?_c)
+    const ql = q.toLowerCase();
+    const filtered = data.filter(m =>
+      (m.question || m.title || '').toLowerCase().includes(ql) ||
+      (m.description || '').toLowerCase().includes(ql)
+    ).slice(0, 8);
+
+    if (!filtered.length) {
+      res.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--dim);">Aucun résultat. Essaie en anglais (ex: "Bitcoin", "election", "Fed rate")</div>';
+    } else {
+      res.innerHTML = filtered.map(m => {
+        const title = m.question || m.title || 'Sans titre';
+        const vol   = m.volume   ? '$' + Number(m.volume).toLocaleString('fr-FR',{maximumFractionDigits:0}) : '--';
+        // Récupérer la proba du "Yes" si dispo
+        let prob = '--';
+        if (m.outcomePrices) {
+          try { const p = JSON.parse(m.outcomePrices); prob = Math.round(parseFloat(p[0])*100)+'%'; } catch {}
+        } else if (m.outcomes && m.outcomes[0]?.price) {
+          prob = Math.round(m.outcomes[0].price * 100) + '%';
+        }
+        return `<div class="poly-result-item" onclick="pinMarket(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="poly-result-title">${title}</div>
+          <div class="poly-result-vol">${vol}</div>
+          <div class="poly-result-prob">${prob}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    res.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--dim);">
+      Erreur de connexion à l'API Polymarket.<br>
+      <a href="https://polymarket.com" target="_blank" style="color:var(--poly);">Ouvrir Polymarket directement →</a>
+    </div>`;
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Rechercher';
+}
+
+function pinMarket(m) {
+  document.getElementById('polyResults').classList.remove('open');
+  document.getElementById('polySearchInput').value = '';
+  // Éviter les doublons
+  if (S.polyPins.some(p => p.id === m.id)) return;
+  S.polyPins.push(m);
+  savePoly();
+  renderPolyPins();
+}
+
+function unpinMarket(id) {
+  S.polyPins = S.polyPins.filter(m => m.id !== id);
+  savePoly();
+  renderPolyPins();
+}
+
+function savePoly() { localStorage.setItem('mh4Poly', JSON.stringify(S.polyPins)); }
+
+function renderPolyPins() {
+  const container = document.getElementById('polyPinned');
+  const empty     = document.getElementById('polyEmpty');
+  if (!S.polyPins.length) {
+    container.innerHTML = '<div class="poly-empty" id="polyEmpty">Recherche un marché puis clique dessus pour l\'épingler ici 📌</div>';
+    return;
+  }
+  container.innerHTML = S.polyPins.map(m => {
+    const title = m.question || m.title || 'Sans titre';
+    const vol   = m.volume ? '$' + Number(m.volume).toLocaleString('fr-FR',{maximumFractionDigits:0}) : '--';
+    const end   = m.endDate ? new Date(m.endDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '--';
+    const cat   = m.category || m.tagSlug || 'Marché';
+
+    // Parser les outcomes / probabilités
+    let outcomes = [];
+    try {
+      const names  = JSON.parse(m.outcomes     || '["Yes","No"]');
+      const prices = JSON.parse(m.outcomePrices|| '[0.5,0.5]');
+      outcomes = names.slice(0, 4).map((n, i) => ({
+        name:  n,
+        price: parseFloat(prices[i]) || 0,
+      }));
+    } catch {
+      outcomes = [{name:'Yes',price:.5},{name:'No',price:.5}];
+    }
+
+    const outcomesHTML = outcomes.map((o, i) => {
+      const pct  = Math.round(o.price * 100);
+      const cols = ['yes-col','no-col','oth-col','oth-col'];
+      const bars = ['poly-bar-yes','poly-bar-no','poly-bar-oth','poly-bar-oth'];
+      return `<div class="poly-outcome">
+        <div class="poly-outcome-name" title="${o.name}">${o.name.length>6?o.name.slice(0,5)+'…':o.name}</div>
+        <div class="poly-bar-wrap"><div class="poly-bar-fill ${bars[i]||'poly-bar-oth'}" style="width:${pct}%"></div></div>
+        <div class="poly-outcome-pct ${cols[i]||'oth-col'}">${pct}%</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="poly-market">
+      <button class="poly-market-unpin" onclick="unpinMarket('${m.id}')" title="Désépingler">×</button>
+      <div class="poly-market-title">${title}</div>
+      <div class="poly-market-meta">
+        <span class="poly-market-cat">${cat}</span>
+        <span class="poly-market-vol">Vol: ${vol}</span>
+        <span class="poly-market-end">⏳ ${end}</span>
+      </div>
+      <div class="poly-outcomes">${outcomesHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REFRESH marché épinglé (probabilités live)
+══════════════════════════════════════════════════════════════ */
+async function refreshPolyPins() {
+  if (!S.polyPins.length) return;
+  try {
+    for (let i = 0; i < S.polyPins.length; i++) {
+      const m = S.polyPins[i];
+      const url = `https://gamma-api.polymarket.com/markets/${m.id}`;
+      const fresh = await (await fetch(url)).json();
+      if (fresh && fresh.id) S.polyPins[i] = fresh;
+    }
+    savePoly();
+    renderPolyPins();
+    document.getElementById('polyUpd').textContent = 'MAJ ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  } catch {}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+updateMoon();
+renderNews();
+renderAlerts();
+renderStockList();
+renderCryptos();
+renderStocks();
+renderIdxList();
+renderIdx();
+renderRawList();
+renderRaw();
+renderPolyPins();
+fetchVigilance();
+refreshPolyPins();
+
+setInterval(() => {
+  renderStocks();
+  renderCryptos();
+  renderIdx();
+  renderRaw();
+  if (S.city) fetchWeather(CITIES.find(c => c.name === S.city));
+  refreshPolyPins();
+}, 600_000);
+
+/* ══════════════════════════════════════════════════════════════
+   CATALOGUE — Indices, Matières, Forex
+   Symboles Yahoo Finance
+══════════════════════════════════════════════════════════════ */
+const CATALOGUE = [
+  // ── Indices mondiaux
+  { sym:'^GSPC',   name:'S&P 500',        cat:'idx', icon:'🇺🇸', catCss:'sugg-cat-idx' },
+  { sym:'^IXIC',   name:'NASDAQ',         cat:'idx', icon:'🇺🇸', catCss:'sugg-cat-idx' },
+  { sym:'^DJI',    name:'Dow Jones',      cat:'idx', icon:'🇺🇸', catCss:'sugg-cat-idx' },
+  { sym:'^FCHI',   name:'CAC 40',         cat:'idx', icon:'🇫🇷', catCss:'sugg-cat-idx' },
+  { sym:'^GDAXI',  name:'DAX',            cat:'idx', icon:'🇩🇪', catCss:'sugg-cat-idx' },
+  { sym:'^FTSE',   name:'FTSE 100',       cat:'idx', icon:'🇬🇧', catCss:'sugg-cat-idx' },
+  { sym:'^N225',   name:'Nikkei 225',     cat:'idx', icon:'🇯🇵', catCss:'sugg-cat-idx' },
+  { sym:'^HSI',    name:'Hang Seng',      cat:'idx', icon:'🇭🇰', catCss:'sugg-cat-idx' },
+  { sym:'^STOXX50E',name:'Euro Stoxx 50', cat:'idx', icon:'🇪🇺', catCss:'sugg-cat-idx' },
+  { sym:'^AEX',    name:'AEX Amsterdam',  cat:'idx', icon:'🇳🇱', catCss:'sugg-cat-idx' },
+  { sym:'^IBEX',   name:'IBEX 35',        cat:'idx', icon:'🇪🇸', catCss:'sugg-cat-idx' },
+  { sym:'^FTMIB',  name:'FTSE MIB',       cat:'idx', icon:'🇮🇹', catCss:'sugg-cat-idx' },
+  { sym:'^SSMI',   name:'SMI Suisse',     cat:'idx', icon:'🇨🇭', catCss:'sugg-cat-idx' },
+  { sym:'^BSESN',  name:'BSE Sensex',     cat:'idx', icon:'🇮🇳', catCss:'sugg-cat-idx' },
+  { sym:'^KS11',   name:'KOSPI',          cat:'idx', icon:'🇰🇷', catCss:'sugg-cat-idx' },
+  { sym:'^BVSP',   name:'Bovespa',        cat:'idx', icon:'🇧🇷', catCss:'sugg-cat-idx' },
+  { sym:'^RUT',    name:'Russell 2000',   cat:'idx', icon:'🇺🇸', catCss:'sugg-cat-idx' },
+  { sym:'^VIX',    name:'VIX Volatilité', cat:'idx', icon:'📊',  catCss:'sugg-cat-idx' },
+  // ── Matières premières
+  { sym:'GC=F',    name:'Or (Gold)',       cat:'mat', icon:'🥇', catCss:'sugg-cat-mat' },
+  { sym:'SI=F',    name:'Argent (Silver)', cat:'mat', icon:'🥈', catCss:'sugg-cat-mat' },
+  { sym:'CL=F',    name:'Pétrole WTI',     cat:'mat', icon:'🛢', catCss:'sugg-cat-mat' },
+  { sym:'BZ=F',    name:'Pétrole Brent',   cat:'mat', icon:'🛢', catCss:'sugg-cat-mat' },
+  { sym:'NG=F',    name:'Gaz naturel',     cat:'mat', icon:'⚡', catCss:'sugg-cat-mat' },
+  { sym:'HG=F',    name:'Cuivre',          cat:'mat', icon:'🔶', catCss:'sugg-cat-mat' },
+  { sym:'ZW=F',    name:'Blé',             cat:'mat', icon:'🌾', catCss:'sugg-cat-mat' },
+  { sym:'ZC=F',    name:'Maïs',            cat:'mat', icon:'🌽', catCss:'sugg-cat-mat' },
+  { sym:'ZS=F',    name:'Soja',            cat:'mat', icon:'🫘', catCss:'sugg-cat-mat' },
+  { sym:'KC=F',    name:'Café',            cat:'mat', icon:'☕', catCss:'sugg-cat-mat' },
+  { sym:'CC=F',    name:'Cacao',           cat:'mat', icon:'🍫', catCss:'sugg-cat-mat' },
+  { sym:'CT=F',    name:'Coton',           cat:'mat', icon:'🌸', catCss:'sugg-cat-mat' },
+  { sym:'PL=F',    name:'Platine',         cat:'mat', icon:'⬜', catCss:'sugg-cat-mat' },
+  // ── Forex
+  { sym:'EURUSD=X',name:'EUR / USD',       cat:'fx',  icon:'💶', catCss:'sugg-cat-fx' },
+  { sym:'GBPUSD=X',name:'GBP / USD',       cat:'fx',  icon:'💷', catCss:'sugg-cat-fx' },
+  { sym:'USDJPY=X',name:'USD / JPY',       cat:'fx',  icon:'🇯🇵', catCss:'sugg-cat-fx' },
+  { sym:'USDCHF=X',name:'USD / CHF',       cat:'fx',  icon:'🇨🇭', catCss:'sugg-cat-fx' },
+  { sym:'AUDUSD=X',name:'AUD / USD',       cat:'fx',  icon:'🇦🇺', catCss:'sugg-cat-fx' },
+  { sym:'USDCAD=X',name:'USD / CAD',       cat:'fx',  icon:'🇨🇦', catCss:'sugg-cat-fx' },
+  { sym:'NZDUSD=X',name:'NZD / USD',       cat:'fx',  icon:'🇳🇿', catCss:'sugg-cat-fx' },
+  { sym:'EURGBP=X',name:'EUR / GBP',       cat:'fx',  icon:'💷', catCss:'sugg-cat-fx' },
+  { sym:'EURJPY=X',name:'EUR / JPY',       cat:'fx',  icon:'🇯🇵', catCss:'sugg-cat-fx' },
+  { sym:'USDCNY=X',name:'USD / CNY',       cat:'fx',  icon:'🇨🇳', catCss:'sugg-cat-fx' },
+  { sym:'USDBRL=X',name:'USD / BRL',       cat:'fx',  icon:'🇧🇷', catCss:'sugg-cat-fx' },
+  { sym:'USDINR=X',name:'USD / INR',       cat:'fx',  icon:'🇮🇳', catCss:'sugg-cat-fx' },
+  { sym:'USDMXN=X',name:'USD / MXN',       cat:'fx',  icon:'🇲🇽', catCss:'sugg-cat-fx' },
+  { sym:'USDTRY=X',name:'USD / TRY',       cat:'fx',  icon:'🇹🇷', catCss:'sugg-cat-fx' },
+];
+
+const CAT_LABEL = { idx:'Indice', mat:'Matière', fx:'Forex' };
+
+// Symbole → entrée catalogue (lookup rapide)
+const CAT_MAP = Object.fromEntries(CATALOGUE.map(c => [c.sym, c]));
+
+/* ── SUGGESTION HELPER ────────────────────────────────────────── */
+function buildSugg(value, ddId, onSelect) {
+  const dd = document.getElementById(ddId);
+  const q  = value.trim().toLowerCase();
+  if (!q) { dd.classList.remove('open'); return; }
+  const hits = CATALOGUE.filter(c =>
+    c.sym.toLowerCase().includes(q) ||
+    c.name.toLowerCase().includes(q) ||
+    CAT_LABEL[c.cat].toLowerCase().includes(q)
+  ).slice(0, 8);
+  if (!hits.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = hits.map(c =>
+    `<div class="sugg-item" onclick="(${onSelect.toString()})('${c.sym}')">
+      <span class="sugg-sym">${c.icon} ${c.sym.replace('=X','').replace('=F','')}</span>
+      <span class="sugg-name">${c.name}</span>
+      <span class="sugg-cat ${c.catCss}">${CAT_LABEL[c.cat]}</span>
+    </div>`
+  ).join('');
+  dd.classList.add('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#w-indices')) document.getElementById('idxSugg').classList.remove('open');
+  if (!e.target.closest('#w-rawmat')) document.getElementById('rawSugg').classList.remove('open');
+});
+
+/* ══════════════════════════════════════════════════════════════
+   INDICES MONDIAUX
+══════════════════════════════════════════════════════════════ */
+const idxCache = {};
+const DEFAULT_IDX = ['^GSPC','^IXIC','^DJI','^FCHI','^GDAXI','^FTSE','^N225'];
+
+S.indices = JSON.parse(localStorage.getItem('mh4Idx') || JSON.stringify(DEFAULT_IDX));
+
+function showIdxSugg(v) {
+  buildSugg(v, 'idxSugg', sym => {
+    document.getElementById('idxInput').value = sym;
+    document.getElementById('idxSugg').classList.remove('open');
+    addIdx();
+  });
+}
+
+function addIdx() {
+  const v = document.getElementById('idxInput').value.trim().toUpperCase();
+  if (!v || S.indices.includes(v)) return;
+  S.indices.push(v);
+  saveIdx();
+  renderIdxList();
+  renderIdx();
+  document.getElementById('idxInput').value = '';
+  document.getElementById('idxSugg').classList.remove('open');
+}
+
+function removeIdx(sym) {
+  S.indices = S.indices.filter(s => s !== sym);
+  delete idxCache[sym];
+  saveIdx();
+  renderIdxList();
+}
+
+function saveIdx() { localStorage.setItem('mh4Idx', JSON.stringify(S.indices)); }
+
+function renderIdxList() {
+  const el = document.getElementById('idxList');
+  if (!S.indices.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0;">Ajoutez un indice</div>';
+    return;
+  }
+  el.innerHTML = S.indices.map(sym => {
+    const c    = idxCache[sym];
+    const info = CAT_MAP[sym];
+    const label = info ? `${info.icon} ${info.name}` : sym.replace('^','').replace('=X','').replace('=F','');
+    const price = c ? c.price : '<span class="skel"></span>';
+    const chgHtml = c ? `<div class="i-chg ${c.dir}">${c.chg}</div>` : '<div class="i-chg"></div>';
+    return `<div class="irow">
+      <div class="i-name">${label}</div>
+      <div class="i-val">${price}</div>
+      ${chgHtml}
+      <button class="i-del" onclick="removeIdx('${sym}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+async function renderIdx() {
+  renderIdxList();
+  for (const sym of S.indices) {
+    const q = await fetchQ(sym);
+    if (q) {
+      const chg = ((q.price - q.prev) / q.prev) * 100;
+      idxCache[sym] = { price: fmtP(q.price), chg: fmtC(chg), dir: chg >= 0 ? 'up' : 'dn' };
+    }
+    renderIdxList();
+  }
+  document.getElementById('idxTime').textContent =
+    'MAJ ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MATIÈRES PREMIÈRES & FOREX
+══════════════════════════════════════════════════════════════ */
+const rawCache = {};
+const DEFAULT_RAW = ['GC=F','CL=F','BZ=F','NG=F','EURUSD=X','GBPUSD=X','USDCHF=X'];
+
+S.raw = JSON.parse(localStorage.getItem('mh4Raw') || JSON.stringify(DEFAULT_RAW));
+
+function showRawSugg(v) {
+  buildSugg(v, 'rawSugg', sym => {
+    document.getElementById('rawInput').value = sym;
+    document.getElementById('rawSugg').classList.remove('open');
+    addRaw();
+  });
+}
+
+function addRaw() {
+  const v = document.getElementById('rawInput').value.trim().toUpperCase();
+  if (!v || S.raw.includes(v)) return;
+  S.raw.push(v);
+  saveRaw();
+  renderRawList();
+  renderRaw();
+  document.getElementById('rawInput').value = '';
+  document.getElementById('rawSugg').classList.remove('open');
+}
+
+function removeRaw(sym) {
+  S.raw = S.raw.filter(s => s !== sym);
+  delete rawCache[sym];
+  saveRaw();
+  renderRawList();
+}
+
+function saveRaw() { localStorage.setItem('mh4Raw', JSON.stringify(S.raw)); }
+
+function renderRawList() {
+  const el = document.getElementById('rawList');
+  if (!S.raw.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0;">Ajoutez un instrument</div>';
+    return;
+  }
+  el.innerHTML = S.raw.map(sym => {
+    const c    = rawCache[sym];
+    const info = CAT_MAP[sym];
+    const label = info ? `${info.icon} ${info.name}` : sym.replace('=X','').replace('=F','');
+    const price = c ? c.price : '<span class="skel"></span>';
+    const chgHtml = c ? `<div class="i-chg ${c.dir}">${c.chg}</div>` : '<div class="i-chg"></div>';
+    return `<div class="irow">
+      <div class="i-name">${label}</div>
+      <div class="i-val">${price}</div>
+      ${chgHtml}
+      <button class="i-del" onclick="removeRaw('${sym}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+async function renderRaw() {
+  renderRawList();
+  for (const sym of S.raw) {
+    const q = await fetchQ(sym);
+    if (q) {
+      const chg = ((q.price - q.prev) / q.prev) * 100;
+      rawCache[sym] = { price: fmtP(q.price), chg: fmtC(chg), dir: chg >= 0 ? 'up' : 'dn' };
+    }
+    renderRawList();
+  }
+  document.getElementById('rawTime').textContent =
+    'MAJ ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RESIZE SYSTEM
+   — Poignée sur chaque .card : glisser pour redimensionner
+   — Taille sauvegardée dans localStorage par data-wid
+══════════════════════════════════════════════════════════════ */
+const RESIZE_KEY = 'mh4Sizes';
+
+function loadSizes() {
+  try { return JSON.parse(localStorage.getItem(RESIZE_KEY) || '{}'); } catch { return {}; }
+}
+function saveSizes(sizes) {
+  localStorage.setItem(RESIZE_KEY, JSON.stringify(sizes));
+}
+
+function applySize(card, size) {
+  if (size.w) card.style.width  = size.w + 'px';
+  if (size.h) card.style.height = size.h + 'px';
+  // Prevent grid from collapsing: override grid auto sizing
+  if (size.w) {
+    card.style.minWidth  = size.w + 'px';
+    card.style.maxWidth  = size.w + 'px';
+  }
+  if (size.h) {
+    card.style.minHeight = size.h + 'px';
+  }
+}
+
+function initResize() {
+  const sizes = loadSizes();
+
+  document.querySelectorAll('.card[data-wid]').forEach(card => {
+    const wid = card.dataset.wid;
+
+    // Restore saved size
+    if (sizes[wid]) applySize(card, sizes[wid]);
+
+    // Inject handle
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.title = 'Glisser pour redimensionner';
+    card.appendChild(handle);
+
+    // Drag state
+    let startX, startY, startW, startH;
+
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.add('resizing');
+
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = card.offsetWidth;
+      startH = card.offsetHeight;
+
+      function onMove(e) {
+        const newW = Math.max(160, startW + (e.clientX - startX));
+        const newH = Math.max(120, startH + (e.clientY - startY));
+        card.style.width     = newW + 'px';
+        card.style.minWidth  = newW + 'px';
+        card.style.maxWidth  = newW + 'px';
+        card.style.height    = newH + 'px';
+        card.style.minHeight = newH + 'px';
+      }
+
+      function onUp() {
+        card.classList.remove('resizing');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+        // Save
+        const all = loadSizes();
+        all[wid] = { w: card.offsetWidth, h: card.offsetHeight };
+        saveSizes(all);
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+
+    // Touch support
+    handle.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY;
+      startW = card.offsetWidth; startH = card.offsetHeight;
+      card.classList.add('resizing');
+
+      function onTouch(e) {
+        const t = e.touches[0];
+        const newW = Math.max(160, startW + (t.clientX - startX));
+        const newH = Math.max(120, startH + (t.clientY - startY));
+        card.style.width     = newW + 'px';
+        card.style.minWidth  = newW + 'px';
+        card.style.maxWidth  = newW + 'px';
+        card.style.height    = newH + 'px';
+        card.style.minHeight = newH + 'px';
+      }
+      function onTouchEnd() {
+        card.classList.remove('resizing');
+        document.removeEventListener('touchmove', onTouch);
+        document.removeEventListener('touchend',  onTouchEnd);
+        const all = loadSizes();
+        all[wid] = { w: card.offsetWidth, h: card.offsetHeight };
+        saveSizes(all);
+      }
+      document.addEventListener('touchmove', onTouch, {passive:false});
+      document.addEventListener('touchend',  onTouchEnd);
+    }, {passive:false});
+  });
+}
+
+// Reset button — double-click on handle resets that card
+document.addEventListener('dblclick', e => {
+  const handle = e.target.closest('.resize-handle');
+  if (!handle) return;
+  const card = handle.closest('.card[data-wid]');
+  if (!card) return;
+  const wid = card.dataset.wid;
+  card.style.width = card.style.minWidth = card.style.maxWidth = '';
+  card.style.height = card.style.minHeight = '';
+  const all = loadSizes();
+  delete all[wid];
+  saveSizes(all);
+});
+
+initResize();
+
+</body>
+</html>
